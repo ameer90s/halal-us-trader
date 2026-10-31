@@ -1,0 +1,21 @@
+name = "halal-trader"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Cron: تقريباً 8:30 ص بتوقيت نيويورك (يتغير مع التوقيت الصيفي)
+# 12:30 UTC ≈ 8:30 AM ET في الصيف
+# يمكنك تعديلها حسب الحاجة
+[triggers]
+crons = ["30 12 * * 1-5"]
+
+# KV لتخزين اشتراكات الإشعارات
+[[kv_namespaces]]
+binding = "SUBSCRIPTIONS"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_KV_ID"
+
+# الأسرار تُضاف عبر لوحة Cloudflare أو:
+# wrangler secret put FINNHUB_KEY
+# wrangler secret put VAPID_PUBLIC
+# wrangler secret put VAPID_PRIVATE
+# wrangler secret put VAPID_SUBJECT
