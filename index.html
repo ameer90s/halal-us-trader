@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="description" content="برنامج تداول إسلامي ذكي للأسهم الأمريكية - حلال فقط" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>حلال تريدير | السوق الأمريكي</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">☪</span>
+        <div>
+          <h1>حلال تريدير</h1>
+          <p class="subtitle">السوق الأمريكي • شرعي بالكامل</p>
+        </div>
+      </div>
+      <div class="clocks">
+        <div class="clock">
+          <span class="clock-label">دبي</span>
+          <span id="dubai-time">--:--:--</span>
+        </div>
+        <div class="clock">
+          <span class="clock-label">نيويورك</span>
+          <span id="ny-time">--:--:--</span>
+        </div>
+        <div class="market-status" id="market-status">جاري التحميل...</div>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="watchlist">المتابعة</button>
+      <button class="nav-btn" data-tab="recommendations">التوصيات</button>
+      <button class="nav-btn" data-tab="stocks">الأسهم الشرعية</button>
+      <button class="nav-btn" data-tab="log">السجل</button>
+      <button class="nav-btn" data-tab="stats">الإحصائيات</button>
+      <button class="nav-btn" data-tab="settings">الإعدادات</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Watchlist Tab -->
+      <section id="tab-watchlist" class="tab active">
+        <div class="section-header">
+          <h2>قائمة المتابعة</h2>
+          <button id="btn-refresh-watch" class="btn-sm">تحديث</button>
+        </div>
+        <div id="watchlist-container" class="cards-container">
+          <p class="empty-state">لا توجد أسهم في المتابعة بعد. انتظر تحليل ما قبل السوق أو أضف يدوياً.</p>
+        </div>
+      </section>
+
+      <!-- Recommendations Tab -->
+      <section id="tab-recommendations" class="tab">
+        <div class="section-header">
+          <h2>التوصيات الحية</h2>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="btn-run-analysis" class="btn-sm">تشغيل تحليل ما قبل السوق</button>
+            <span class="badge" id="rec-count">0</span>
+          </div>
+        </div>
+        <div id="recommendations-container" class="cards-container">
+          <p class="empty-state">لا توجد توصيات حالياً. اضغط "تشغيل تحليل ما قبل السوق" أو انتظر التحليل التلقائي لاحقاً.</p>
+        </div>
+      </section>
+
+      <!-- Halal Stocks Tab -->
+      <section id="tab-stocks" class="tab">
+        <div class="section-header">
+          <h2>الأسهم الشرعية (نواة قوية)</h2>
+          <input type="search" id="stock-search" placeholder="ابحث عن سهم..." class="search-input" />
+        </div>
+        <p class="note">القائمة أدناه نواة من الأسهم التي تمر عادةً وفق معايير AAOIFI. تحقق دائماً من المصدر الرسمي قبل التداول. يمكن إضافة أي سهم يدوياً.</p>
+        <div id="stocks-container" class="stocks-grid"></div>
+      </section>
+
+      <!-- Log Tab -->
+      <section id="tab-log" class="tab">
+        <div class="section-header">
+          <h2>سجل التوصيات والقرارات</h2>
+          <button id="btn-export-log" class="btn-sm">تصدير CSV</button>
+        </div>
+        <div id="log-container" class="log-list">
+          <p class="empty-state">السجل فارغ حالياً.</p>
+        </div>
+      </section>
+
+      <!-- Stats Tab -->
+      <section id="tab-stats" class="tab">
+        <div class="section-header">
+          <h2>الإحصائيات</h2>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">إجمالي التوصيات</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-wins">0</span>
+            <span class="stat-label">ناجحة</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-losses">0</span>
+            <span class="stat-label">خاسرة</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-winrate">0%</span>
+            <span class="stat-label">نسبة النجاح</span>
+          </div>
+        </div>
+        <p class="note">سيتم تحديث الإحصائيات تلقائياً عند تسجيل نتائج الصفقات لاحقاً.</p>
+      </section>
+
+      <!-- Settings Tab -->
+      <section id="tab-settings" class="tab">
+        <div class="section-header">
+          <h2>الإعدادات</h2>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="margin-bottom:10px;font-size:1rem">مفتاح Finnhub (مجاني)</h3>
+          <p class="note" style="margin-bottom:12px">احصل على مفتاح مجاني من <a href="https://finnhub.io" target="_blank" style="color:var(--primary)">finnhub.io</a> (للاستخدام الشخصي). بدون المفتاح يعمل البرنامج بالمحاكاة فقط.</p>
+          <input type="password" id="api-key-input" placeholder="الصق مفتاح Finnhub هنا" class="search-input" style="max-width:100%;width:100%;margin-bottom:10px" />
+          <button id="btn-save-api" class="btn-sm">حفظ المفتاح</button>
+          <p id="api-status" style="margin-top:10px;font-size:0.85rem;color:var(--text-muted)"></p>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="margin-bottom:10px;font-size:1rem">رابط السيرفر (Worker)</h3>
+          <p class="note" style="margin-bottom:12px">بعد نشر الـ Worker على Cloudflare ضع رابطه هنا.</p>
+          <input type="text" id="worker-url-input" placeholder="https://halal-trader.xxxxx.workers.dev" class="search-input" style="max-width:100%;width:100%;margin-bottom:10px" />
+          <button id="btn-save-worker" class="btn-sm">حفظ رابط السيرفر</button>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <h3 style="margin-bottom:10px;font-size:1rem">الإشعارات التلقائية</h3>
+          <p class="note" style="margin-bottom:12px">لتلقي التوصيات حتى لو كان الجوال مقفلاً، اضغط الزر أدناه واسمح بالإشعارات.</p>
+          <button id="btn-enable-push" class="btn-sm" style="width:100%">تفعيل الإشعارات التلقائية</button>
+          <p id="push-status" style="margin-top:10px;font-size:0.85rem;color:var(--text-muted)"></p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;font-size:1rem">معلومات النظام</h3>
+          <p style="font-size:0.85rem;color:var(--text-muted)">
+            • كل شيء يعمل تلقائياً بعد ربط السيرفر<br>
+            • التحليل ديناميكي (لا نسب ثابتة)<br>
+            • القواعد الشرعية فقط ثابتة<br>
+            • الإشعارات تصل حتى لو الجهاز مقفل
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Info -->
+    <footer class="footer">
+      <p>كل شيء ديناميكي • لا نسب ثابتة • القواعد الشرعية فقط ثابتة</p>
+      <p class="disclaimer">ليس نصيحة استثمارية. التداول ينطوي على مخاطر. تحقق من الامتثال الشرعي بنفسك.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
