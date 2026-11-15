@@ -18,7 +18,7 @@ def save(p,x):
     p.parent.mkdir(parents=True,exist_ok=True)
     p.write_text(json.dumps(x,ensure_ascii=False,indent=2))
 def empty():
-    return {"bars":{},"seen":[],"trades":[],"alerts":[],"last_scan":None,"reviews":[]}
+    return {"bars":{},"seen":[],"trades":[],"alerts":[],"last_scan":None,"reviews":[],"week_id":None,"paper_balance":1000.0}
 def approved_valid():
     try:
         d=dt.date.fromisoformat(os.environ.get("SHARIA_VERIFIED_AT",""))
@@ -104,6 +104,20 @@ def update_paper(state, symbol, bar):
             trade["closed"]=True;trade["exit"]=round(end,4);trade["exit_reason"]=why
             trade["exit_time"]=bar["t"]
             trade["r"]=round((end-entry)/(entry-stop),4)
+            trade["paper_profit_usd"]=round((end-entry)*int(trade.get("quantity",0)),2)
+            if trade.get("week_id")==state.get("week_id"):
+                state["paper_balance"]=round(float(state.get("paper_balance",1000.0))+trade["paper_profit_usd"],2)
+
+def maintain_week(state):
+    today=now().astimezone(NY).date()
+    year,week,_=today.isocalendar()
+    current=f"{year}-W{week:02d}"
+    if state.get("week_id")!=current:
+        state["week_id"]=current
+        state["paper_balance"]=1000.0
+        state["seen"]=[]
+        # Never delete historical trades; weekly filtering uses the week_id.
+    return current
 
 def read_frames(payload, state):
     for msg in payload:
@@ -125,7 +139,13 @@ def read_frames(payload, state):
             if k not in state["seen"]:
                 state["seen"].append(k)
                 state["alerts"].append(signal)
-                state["trades"].append(dict(signal,closed=False))
+                risk_per_share=signal["entry"]-signal["stop"]
+                balance=max(0,float(state.get("paper_balance",1000)))
+                qty=max(0,min(int(balance/float(signal["entry"])),int(balance*0.01/risk_per_share))) if risk_per_share>0 else 0
+                if qty>0:
+                    state["trades"].append(dict(signal,closed=False,quantity=qty,week_id=state.get("week_id")))
+                else:
+                    signal["paper_rejected_reason"]="insufficient_risk_budget"
                 state["alerts"]=state["alerts"][-100:]
                 state["trades"]=state["trades"][-1000:]
                 message=("🔔 Islamic Alpha Desk — إشارة بحثية فقط\n"+
@@ -171,7 +191,10 @@ def score_trades(trades):
         x.append(float(t["r"]))
     summary=[]
     for name,rs in by.items():
-        summary.append({"strategy":name,"sample":len(rs),"win_rate":round(100*sum(x>0 for x in rs)/len(rs),1),"expectancy_R":round(statistics.mean(rs),3),"eligible_for_review":len(rs)>=30})
+        split=max(1,int(len(rs)*.7))
+        train=rs[:split]; test=rs[split:]
+        passed=len(rs)>=30 and len(test)>=9 and statistics.mean(train)>0 and statistics.mean(test)>0
+        summary.append({"strategy":name,"sample":len(rs),"win_rate":round(100*sum(x>0 for x in rs)/len(rs),1),"expectancy_R":round(statistics.mean(rs),3),"train_expectancy_R":round(statistics.mean(train),3),"out_of_sample_R":round(statistics.mean(test),3) if test else None,"eligible_for_review":passed})
     return sorted(summary,key=lambda x:x["expectancy_R"],reverse=True)
 
 def review(state,weekly=False):
@@ -181,10 +204,11 @@ def review(state,weekly=False):
     if not results:notes.append("لا توجد صفقات ورقية مغلقة كافية؛ لا يجوز إعلان أفضل استراتيجية")
     elif not eligible:notes.append("العينة أقل من 30 نتيجة لكل استراتيجية؛ التحسينات للمتابعة فقط")
     else:notes.append("مرشح للمراجعة الإحصائية فقط؛ يتطلب اختباراً خارج العينة قبل الاعتماد")
-    detail={"generated":now().isoformat(),"mode":"observation_only","strategies":results,"notes":notes,"signals_seen":len(state.get("alerts",[])),"confirmed_trades":len([x for x in state.get("trades",[]) if x.get("closed")]),"weekly_start_usd":1000,"target_week_pct":2,"profit_claimed":False}
+    detail={"generated":now().isoformat(),"mode":"observation_only","strategies":results,"notes":notes,"signals_seen":len(state.get("alerts",[])),"confirmed_trades":len([x for x in state.get("trades",[]) if x.get("closed")]),"weekly_start_usd":1000,"paper_balance_usd":state.get("paper_balance",1000.0),"paper_return_pct":round((float(state.get("paper_balance",1000.0))/1000-1)*100,2),"target_week_pct":2,"profit_claimed":False}
     report=get_json(REPORT,{})
     report["last_run"]=now().isoformat();report["mode"]="github_scheduled_best_effort"
     report["weekly_summary" if weekly else "daily_review"]=detail
+    if weekly: report["saturday_final_setup"]=eligible[0] if eligible else None
     report["recent_research_signals"]=state.get("alerts",[])[-12:]
     save(REPORT,report)
     if weekly and os.getenv("NOTIFY_REPORT","false").lower()=="true":
@@ -194,6 +218,7 @@ def review(state,weekly=False):
 def main():
     command=sys.argv[1] if len(sys.argv)>1 else "scan"
     state=get_json(STATE,empty())
+    maintain_week(state)
     if command=="scan":
         try:live_scan(state)
         except Exception as exc:print("Scan safely stopped:",type(exc).__name__)
