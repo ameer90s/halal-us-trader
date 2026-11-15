@@ -85,6 +85,26 @@ def notify(msg):
         print("Notification delivery failed:",type(exc).__name__)
         return False
 
+def update_paper(state, symbol, bar):
+    """Mark virtual research outcomes, never broker fills. Conservatively stop-first."""
+    for trade in state["trades"]:
+        if trade.get("closed") or trade["symbol"]!=symbol:continue
+        if trade["bar_time"]>=bar["t"]:continue
+        entry=float(trade["entry"]);stop=float(trade["stop"]);target=float(trade["target"])
+        end=None;why=None
+        if bar["l"]<=stop:end=stop;why="stop_first_conservative"
+        elif bar["h"]>=target:end=target;why="target"
+        else:
+            try:
+                created=dt.datetime.fromisoformat(trade["bar_time"].replace("Z","+00:00"))
+                age=(dt.datetime.fromisoformat(bar["t"].replace("Z","+00:00"))-created).total_seconds()
+                if age>=45*60:end=float(bar["c"]);why="timeout_45min"
+            except (ValueError,TypeError):pass
+        if end is not None:
+            trade["closed"]=True;trade["exit"]=round(end,4);trade["exit_reason"]=why
+            trade["exit_time"]=bar["t"]
+            trade["r"]=round((end-entry)/(entry-stop),4)
+
 def read_frames(payload, state):
     for msg in payload:
         if msg.get("T")!="b":continue
@@ -98,13 +118,16 @@ def read_frames(payload, state):
         if hist and hist[-1]["t"]==b["t"]:hist[-1]=b
         elif not hist or b["t"]>hist[-1]["t"]:hist.append(b)
         state["bars"][s]=hist[-70:]
+        update_paper(state,s,b)
         signal=compute(s,state["bars"][s])
         if signal:
-            k=s+"@"+b["t"]
+            k=s+"@"+str(dt.datetime.fromisoformat(b["t"].replace("Z","+00:00")).astimezone(NY).date())
             if k not in state["seen"]:
                 state["seen"].append(k)
                 state["alerts"].append(signal)
+                state["trades"].append(dict(signal,closed=False))
                 state["alerts"]=state["alerts"][-100:]
+                state["trades"]=state["trades"][-1000:]
                 message=("🔔 Islamic Alpha Desk — إشارة بحثية فقط\n"+
                     s+" | دخول "+str(signal["entry"])+" | وقف "+str(signal["stop"])+" | هدف "+str(signal["target"])+
                     "\nIEX جزئية؛ لا أوامر تداول، ولا ضمان للنتائج")
@@ -162,6 +185,7 @@ def review(state,weekly=False):
     report=get_json(REPORT,{})
     report["last_run"]=now().isoformat();report["mode"]="github_scheduled_best_effort"
     report["weekly_summary" if weekly else "daily_review"]=detail
+    report["recent_research_signals"]=state.get("alerts",[])[-12:]
     save(REPORT,report)
     if weekly and os.getenv("NOTIFY_REPORT","false").lower()=="true":
         notify("📊 تقرير السبت: "+("لا توجد عينة كافية لاعتماد استراتيجية" if not eligible else "نتائج تحليل الأسبوع متاحة، لا تطبيق تلقائي"))
