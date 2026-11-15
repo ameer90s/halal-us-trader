@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: islamic-alpha-desk-iex-research
+    runtime: docker
+    plan: free
+    rootDir: alpha-desk-api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: EXECUTE_LIVE_ORDERS
+        value: "false"
+      - key: MONITOR_SYMBOLS
+        value: "AAPL,AMD,INTC,SOFI,PLTR,NVDA"
+      - key: SHARIA_APPROVED
+        value: ""
+      - key: ALPACA_KEY_ID
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
