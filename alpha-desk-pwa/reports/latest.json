@@ -1,0 +1,9 @@
+{
+  "mode": "research_only",
+  "last_run": null,
+  "daily_review": null,
+  "weekly_summary": null,
+  "recent_research_signals": [],
+  "alerts_enabled": false,
+  "notice": "Connect Alpaca and vetted Sharia universe in GitHub Actions Secrets; reports update after successful scheduled runs."
+}
