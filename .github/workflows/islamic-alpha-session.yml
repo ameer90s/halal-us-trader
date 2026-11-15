@@ -1,0 +1,82 @@
+name: Islamic Alpha Desk — market and reviews
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "scan, daily, or weekly"
+        type: choice
+        required: true
+        default: scan
+        options: [scan, daily, weekly]
+  schedule:
+    # UTC, NY DST and holidays checked inside Python. Off-hour jobs exit quickly.
+    - cron: "2-59/5 13-21 * * 1-5"
+    # 21:37/22:37 New York Monday-Friday
+    - cron: "37 2 * * 2-6"
+    # Saturday morning New York
+    - cron: "17 12 * * 6"
+permissions:
+  contents: write
+concurrency:
+  group: islamic-alpha-monitor
+  cancel-in-progress: false
+jobs:
+  market:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --disable-pip-version-check websocket-client==1.8.0 exchange-calendars==4.8
+      - name: Recover previous observations (best effort)
+        uses: actions/cache/restore@v4
+        with:
+          path: .alpha_state.json
+          key: alpha-cache-${{ github.run_id }}
+          restore-keys: |
+            alpha-cache-
+      - name: Select session task
+        id: route
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+          SCHEDULE_EXPR: ${{ github.event.schedule }}
+        run: |
+          MODE=scan
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then MODE="$INPUT_MODE"; fi
+          if [ "$SCHEDULE_EXPR" = "37 2 * * 2-6" ]; then MODE=daily; fi
+          if [ "$SCHEDULE_EXPR" = "17 12 * * 6" ]; then MODE=weekly; fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+      - name: Market monitoring or after-session report
+        env:
+          ALPACA_KEY_ID: ${{ secrets.ALPACA_KEY_ID }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          SHARIA_APPROVED: ${{ secrets.SHARIA_APPROVED }}
+          SHARIA_VERIFIED_AT: ${{ secrets.SHARIA_VERIFIED_AT }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NOTIFY_REPORT: "true"
+          MONITOR_SYMBOLS: "AAPL,AMD,INTC,SOFI,PLTR,NVDA"
+        run: python alpha-desk-pwa/engine.py "${{ steps.route.outputs.mode }}"
+      - name: Preserve short-lived observation cache (best effort)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .alpha_state.json
+          key: alpha-cache-${{ github.run_id }}
+      - name: Publish non-secret daily and Saturday report to Vercel source
+        if: steps.route.outputs.mode != 'scan'
+        run: |
+          if [ ! -f alpha-desk-pwa/reports/latest.json ]; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add alpha-desk-pwa/reports/latest.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Update Islamic Alpha Desk review data [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
