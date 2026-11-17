@@ -1,7 +1,21 @@
 {
-  "mode": "research_only",
-  "last_run": null,
-  "daily_review": null,
+  "mode": "github_scheduled_best_effort",
+  "last_run": "2026-11-17T11:04:20.146738+00:00",
+  "daily_review": {
+    "generated": "2026-11-17T11:04:20.146674+00:00",
+    "mode": "observation_only",
+    "strategies": [],
+    "notes": [
+      "لا توجد صفقات ورقية مغلقة كافية؛ لا يجوز إعلان أفضل استراتيجية"
+    ],
+    "signals_seen": 0,
+    "confirmed_trades": 0,
+    "weekly_start_usd": 1000,
+    "paper_balance_usd": 1000.0,
+    "paper_return_pct": 0.0,
+    "target_week_pct": 2,
+    "profit_claimed": false
+  },
   "weekly_summary": null,
   "recent_research_signals": [],
   "alerts_enabled": false,
