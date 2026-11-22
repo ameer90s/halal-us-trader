@@ -1,0 +1,331 @@
+{
+  "data_source": "https://raw.githubusercontent.com/getdata-finance/intc-5m-ohlcv-stocks-historical-data/main/INTC_5m.csv",
+  "ticker": "INTC",
+  "timeframe": "5m",
+  "period": [
+    "2026-03-26",
+    "2026-09-25"
+  ],
+  "bars": 9906,
+  "sessions": 127,
+  "cutoff_date": "2026-08-03",
+  "mode": "TECHNICAL_RESEARCH_ONLY_NO_SHARIA_OR_NEWS",
+  "source_disclaimer": "Third-party public evaluation sample, accuracy not independently audited; not Alpaca IEX.",
+  "method": {
+    "next_bar_open": true,
+    "stop_first_if_both_hit": true,
+    "slippage_each_side_pct": 0.05,
+    "fees_usd_per_share_per_side": 0.005,
+    "capital_reset_each_week": 1000,
+    "risk_budget_per_trade_pct": 1,
+    "max_entries_per_day": 2,
+    "last_entry_ny": "14:30",
+    "force_exit_ny": "14:55"
+  },
+  "counts": {
+    "MOMENTUM_BREAKOUT": 8,
+    "BB_REVERSION": 2
+  },
+  "by_strategy": {
+    "MOMENTUM_BREAKOUT": {
+      "trades": 8,
+      "wins": 3,
+      "win_rate_pct": 37.5,
+      "net_usd": 1.96,
+      "expectancy_r": -0.208,
+      "profit_factor": 1.059,
+      "train": {
+        "trades": 4,
+        "wins": 2,
+        "win_rate_pct": 50.0,
+        "net_usd": 7.38,
+        "expectancy_r": 0.201,
+        "profit_factor": 1.448
+      },
+      "holdout": {
+        "trades": 4,
+        "wins": 1,
+        "win_rate_pct": 25.0,
+        "net_usd": -5.42,
+        "expectancy_r": -0.616,
+        "profit_factor": 0.683
+      },
+      "sample_sufficient": false
+    },
+    "BB_REVERSION": {
+      "trades": 2,
+      "wins": 1,
+      "win_rate_pct": 50.0,
+      "net_usd": 6.25,
+      "expectancy_r": 0.09,
+      "profit_factor": 2.115,
+      "train": {
+        "trades": 1,
+        "wins": 1,
+        "win_rate_pct": 100.0,
+        "net_usd": 11.86,
+        "expectancy_r": 1.42,
+        "profit_factor": null
+      },
+      "holdout": {
+        "trades": 1,
+        "wins": 0,
+        "win_rate_pct": 0.0,
+        "net_usd": -5.61,
+        "expectancy_r": -1.239,
+        "profit_factor": 0.0
+      },
+      "sample_sufficient": false
+    }
+  },
+  "weekly": [
+    {
+      "week": "2026-13",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-14",
+      "ending_balance": 997.05,
+      "return_pct": -0.295
+    },
+    {
+      "week": "2026-15",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-16",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-17",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-18",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-19",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-20",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-21",
+      "ending_balance": 994.32,
+      "return_pct": -0.568
+    },
+    {
+      "week": "2026-22",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-23",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-24",
+      "ending_balance": 1016.01,
+      "return_pct": 1.601
+    },
+    {
+      "week": "2026-25",
+      "ending_balance": 1011.86,
+      "return_pct": 1.186
+    },
+    {
+      "week": "2026-26",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-27",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-28",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-29",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-30",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-31",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-32",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-33",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-34",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-35",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-36",
+      "ending_balance": 994.39,
+      "return_pct": -0.561
+    },
+    {
+      "week": "2026-37",
+      "ending_balance": 1000.0,
+      "return_pct": 0.0
+    },
+    {
+      "week": "2026-38",
+      "ending_balance": 994.25,
+      "return_pct": -0.575
+    },
+    {
+      "week": "2026-39",
+      "ending_balance": 1000.33,
+      "return_pct": 0.033
+    }
+  ],
+  "total_net_usd": 8.21,
+  "trades": [
+    {
+      "day": "2026-03-31",
+      "week": "2026-14",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 43.08,
+      "exit": 43.49,
+      "qty": 22,
+      "net_usd": 7.848,
+      "r": 0.811,
+      "reason": "session_exit"
+    },
+    {
+      "day": "2026-04-02",
+      "week": "2026-14",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 49.9,
+      "exit": 49.24,
+      "qty": 15,
+      "net_usd": -10.794,
+      "r": -1.09,
+      "reason": "stop_first"
+    },
+    {
+      "day": "2026-05-22",
+      "week": "2026-21",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 121.2,
+      "exit": 119.91,
+      "qty": 4,
+      "net_usd": -5.682,
+      "r": -0.615,
+      "reason": "session_exit"
+    },
+    {
+      "day": "2026-06-12",
+      "week": "2026-24",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 125.06,
+      "exit": 127.4833,
+      "qty": 7,
+      "net_usd": 16.009,
+      "r": 1.699,
+      "reason": "target"
+    },
+    {
+      "day": "2026-06-17",
+      "week": "2026-25",
+      "strategy": "BB_REVERSION",
+      "entry": 122.17,
+      "exit": 124.675,
+      "qty": 5,
+      "net_usd": 11.858,
+      "r": 1.42,
+      "reason": "target"
+    },
+    {
+      "day": "2026-09-01",
+      "week": "2026-36",
+      "strategy": "BB_REVERSION",
+      "entry": 88.63,
+      "exit": 88.2188,
+      "qty": 11,
+      "net_usd": -5.606,
+      "r": -1.239,
+      "reason": "stop_first"
+    },
+    {
+      "day": "2026-09-16",
+      "week": "2026-38",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 102.4,
+      "exit": 101.8729,
+      "qty": 9,
+      "net_usd": -5.753,
+      "r": -1.213,
+      "reason": "stop_first"
+    },
+    {
+      "day": "2026-09-22",
+      "week": "2026-39",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 122.09,
+      "exit": 121.7,
+      "qty": 8,
+      "net_usd": -4.175,
+      "r": -1.338,
+      "reason": "stop_first"
+    },
+    {
+      "day": "2026-09-22",
+      "week": "2026-39",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 123.14,
+      "exit": 122.38,
+      "qty": 8,
+      "net_usd": -7.142,
+      "r": -1.175,
+      "reason": "stop_first"
+    },
+    {
+      "day": "2026-09-24",
+      "week": "2026-39",
+      "strategy": "MOMENTUM_BREAKOUT",
+      "entry": 124.54,
+      "exit": 126.34,
+      "qty": 7,
+      "net_usd": 11.652,
+      "r": 1.261,
+      "reason": "session_exit"
+    }
+  ]
+}
