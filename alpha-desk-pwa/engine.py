@@ -138,12 +138,14 @@ def read_frames(payload, state):
         # Only fully completed 5m windows and no unverified proprietary indicator.
         calc=evaluate(five,news_verified=False,sharia_verified=approved_valid() and s in APPROVED)
         signal=None
-        if calc.get("status") in ("TECHNICAL_CANDIDATE","RESEARCH_CONFIRMED") and five:
+        if calc.get("status") in ("TECHNICAL_CANDIDATE","RESEARCH_CONFIRMED","TECHNICALLY_CONFIRMED_NO_CATALYST") and five:
             # No catalyst verification means no confirmed or alertable recommendation.
-            if calc["status"]=="RESEARCH_CONFIRMED":
-                signal={"symbol":s,"entry":calc["signal_close"],"stop":calc["indicative_stop"],"target":calc["indicative_target"],"bar_time":five[-1]["t"],"strategy":calc["strategy"],"status":"RESEARCH_ONLY","source":"IEX"}
+            if calc["status"] in ("RESEARCH_CONFIRMED","TECHNICALLY_CONFIRMED_NO_CATALYST"):
+                signal={"symbol":s,"entry":calc["signal_close"],"stop":calc["indicative_stop"],"target":calc["indicative_target"],"bar_time":five[-1]["t"],"strategy":calc["strategy"],"status":"TECHNICAL_RESEARCH_ONLY" if calc["status"]=="TECHNICALLY_CONFIRMED_NO_CATALYST" else "RESEARCH_ONLY","source":"IEX","catalyst_verified":calc["news_verified"]}
         
         if signal:
+            # Technical research alerts require validated sharia provenance; never claim a verified catalyst.
+            if not approved_valid() or s not in APPROVED:continue
             k=s+"@"+str(dt.datetime.fromisoformat(b["t"].replace("Z","+00:00")).astimezone(NY).date())
             if k not in state["seen"]:
                 state["seen"].append(k)
@@ -157,7 +159,7 @@ def read_frames(payload, state):
                     signal["paper_rejected_reason"]="insufficient_risk_budget"
                 state["alerts"]=state["alerts"][-100:]
                 state["trades"]=state["trades"][-1000:]
-                message=("🔔 Islamic Alpha Desk — إشارة بحثية فقط\n"+
+                message=("🔔 Islamic Alpha Desk — إشارة فنية بحثية فقط (لا تحقق من الأخبار)\n"+
                     s+" | دخول "+str(signal["entry"])+" | وقف "+str(signal["stop"])+" | هدف "+str(signal["target"])+
                     "\nIEX جزئية؛ لا أوامر تداول، ولا ضمان للنتائج")
                 signal["notification_delivered"]=notify(message)
