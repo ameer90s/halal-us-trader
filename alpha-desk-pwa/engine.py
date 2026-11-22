@@ -3,6 +3,7 @@
 import os, json, sys, time, datetime as dt, statistics, math, urllib.request, urllib.parse
 from zoneinfo import ZoneInfo
 from pathlib import Path
+from strategy_engine import evaluate, aggregate_1m_to_5m
 
 NY = ZoneInfo("America/New_York")
 UTC = dt.timezone.utc
@@ -36,12 +37,12 @@ def exchange_window():
     except (ValueError,KeyError,TypeError): return False
     return op <= moment < close-dt.timedelta(hours=1)
 def bars_fresh(b):
-    if len(b)<45:return False
+    if len(b)<285:return False
     try:
         stamps=[dt.datetime.fromisoformat(x["t"].replace("Z","+00:00")) for x in b]
     except (ValueError,TypeError,KeyError):return False
     if (now()-stamps[-1]).total_seconds()>125:return False
-    if (stamps[-1]-stamps[0]).total_seconds()>65*60:return False
+    if (stamps[-1]-stamps[0]).total_seconds()>315*60:return False
     if any(not (0<(y-x).total_seconds()<=125) for x,y in zip(stamps,stamps[1:])):return False
     return True
 
@@ -131,9 +132,17 @@ def read_frames(payload, state):
         hist=state["bars"].setdefault(s,[])
         if hist and hist[-1]["t"]==b["t"]:hist[-1]=b
         elif not hist or b["t"]>hist[-1]["t"]:hist.append(b)
-        state["bars"][s]=hist[-70:]
+        state["bars"][s]=hist[-450:]
         update_paper(state,s,b)
-        signal=compute(s,state["bars"][s])
+        five=aggregate_1m_to_5m(state["bars"][s])
+        # Only fully completed 5m windows and no unverified proprietary indicator.
+        calc=evaluate(five,news_verified=False,sharia_verified=approved_valid() and s in APPROVED)
+        signal=None
+        if calc.get("status") in ("TECHNICAL_CANDIDATE","RESEARCH_CONFIRMED") and five:
+            # No catalyst verification means no confirmed or alertable recommendation.
+            if calc["status"]=="RESEARCH_CONFIRMED":
+                signal={"symbol":s,"entry":calc["signal_close"],"stop":calc["indicative_stop"],"target":calc["indicative_target"],"bar_time":five[-1]["t"],"strategy":calc["strategy"],"status":"RESEARCH_ONLY","source":"IEX"}
+        
         if signal:
             k=s+"@"+str(dt.datetime.fromisoformat(b["t"].replace("Z","+00:00")).astimezone(NY).date())
             if k not in state["seen"]:
