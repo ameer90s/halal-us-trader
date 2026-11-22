@@ -19,7 +19,7 @@ def save(p,x):
     p.parent.mkdir(parents=True,exist_ok=True)
     p.write_text(json.dumps(x,ensure_ascii=False,indent=2))
 def empty():
-    return {"bars":{},"seen":[],"trades":[],"alerts":[],"last_scan":None,"reviews":[],"week_id":None,"paper_balance":1000.0}
+    return {"bars":{},"seen":[],"trades":[],"alerts":[],"last_scan":None,"reviews":[],"week_id":None,"paper_balance":1000.0,"watch_candidates":{}}
 def approved_valid():
     try:
         d=dt.date.fromisoformat(os.environ.get("SHARIA_VERIFIED_AT",""))
@@ -137,6 +137,10 @@ def read_frames(payload, state):
         five=aggregate_1m_to_5m(state["bars"][s])
         # Only fully completed 5m windows and no unverified proprietary indicator.
         calc=evaluate(five,news_verified=False,sharia_verified=approved_valid() and s in APPROVED)
+        if calc.get("status")=="WATCH_CANDIDATE":
+            state.setdefault("watch_candidates",{})[s]={"symbol":s,"strategy":calc.get("strategy"),"rsi":calc.get("rsi"),"relative_volume":calc.get("rvol"),"bar_time":five[-1]["t"] if five else None,"status":"WATCH_ONLY","notification":False}
+        elif calc.get("status") not in ("TECHNICAL_CANDIDATE","RESEARCH_CONFIRMED","TECHNICALLY_CONFIRMED_NO_CATALYST"):
+            state.setdefault("watch_candidates",{}).pop(s,None)
         signal=None
         if calc.get("status") in ("TECHNICAL_CANDIDATE","RESEARCH_CONFIRMED","TECHNICALLY_CONFIRMED_NO_CATALYST") and five:
             # No catalyst verification means no confirmed or alertable recommendation.
@@ -144,6 +148,11 @@ def read_frames(payload, state):
                 signal={"symbol":s,"entry":calc["signal_close"],"stop":calc["indicative_stop"],"target":calc["indicative_target"],"bar_time":five[-1]["t"],"strategy":calc["strategy"],"status":"TECHNICAL_RESEARCH_ONLY" if calc["status"]=="TECHNICALLY_CONFIRMED_NO_CATALYST" else "RESEARCH_ONLY","source":"IEX","catalyst_verified":calc["news_verified"]}
         
         if signal:
+            # Keep at most two research notices per NY session; never lower the safety bar for a quota.
+            session_day=str(dt.datetime.fromisoformat(b["t"].replace("Z","+00:00")).astimezone(NY).date())
+            notices_today=sum(1 for item in state.get("alerts",[]) if item.get("session_day")==session_day)
+            if notices_today>=2:continue
+            signal["session_day"]=session_day
             # Technical research alerts require validated sharia provenance; never claim a verified catalyst.
             if not approved_valid() or s not in APPROVED:continue
             k=s+"@"+str(dt.datetime.fromisoformat(b["t"].replace("Z","+00:00")).astimezone(NY).date())
@@ -221,6 +230,7 @@ def review(state,weekly=False):
     report["weekly_summary" if weekly else "daily_review"]=detail
     if weekly: report["saturday_final_setup"]=eligible[0] if eligible else None
     report["recent_research_signals"]=state.get("alerts",[])[-12:]
+    report["watch_candidates"]=sorted(state.get("watch_candidates",{}).values(),key=lambda x:x.get("relative_volume",0),reverse=True)[:12]
     save(REPORT,report)
     if weekly and os.getenv("NOTIFY_REPORT","false").lower()=="true":
         notify("📊 تقرير السبت: "+("لا توجد عينة كافية لاعتماد استراتيجية" if not eligible else "نتائج تحليل الأسبوع متاحة، لا تطبيق تلقائي"))
