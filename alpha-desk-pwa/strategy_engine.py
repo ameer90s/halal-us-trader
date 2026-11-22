@@ -67,24 +67,31 @@ def evaluate(five_minute_bars, *, session_bars=None, news_verified=False, sharia
     # Our documented Pro-Scalper-like confirmation = bullish candle body + EMA9>EMA20
     # and close > prior close. It is NOT a replica of a proprietary indicator.
     scalper_confirm=(price>last["o"] and price>=prev["c"] and e9>=e20 and body>=0.32)
-    breakout=(scalper_confirm and body>=.38 and 52<=cur_rsi<=73 and
+    watch_breakout=(scalper_confirm and body>=.38 and 52<=cur_rsi<=73 and
       rv>=1.10 and price>=recenthigh*.998 and price>mid and price>vwap and e20>=e50*.997)
-    reversal=(price>last["o"] and price>=prev["c"] and body>=.30 and 32<cur_rsi<57 and rv>=.9 and
+    breakout=(scalper_confirm and body>=.50 and 55<=cur_rsi<=77 and
+      rv>=1.2 and price>recenthigh and price>high and price>vwap and e20>e50)
+    watch_reversal=(price>last["o"] and price>=prev["c"] and body>=.30 and 32<cur_rsi<57 and rv>=.9 and
       (prev["l"]<=priorlow*1.004 or prev["c"]<mid) and price>low and price<=mid*1.004 and price>e9*.992)
+    reversal=(scalper_confirm and 30<cur_rsi<52 and rv>=1.0 and
+      prev["l"]<=priorlow and price>low and price<mid)
     kind="MOMENTUM_BREAKOUT" if breakout else "BB_REVERSION" if reversal else None
-    if not kind:return {"status":"NO_SIGNAL","rsi":round(cur_rsi,2),"rvol":round(rv,2)}
+    if not kind:
+        if watch_breakout or watch_reversal:
+            return {"status":"WATCH_CANDIDATE","strategy":"MOMENTUM_BREAKOUT" if watch_breakout else "BB_REVERSION","rsi":round(cur_rsi,2),"rvol":round(rv,2),"notification":False}
+        return {"status":"NO_SIGNAL","rsi":round(cur_rsi,2),"rvol":round(rv,2)}
     stop=min(last["l"],price-(1.15 if breakout else 1.2)*a)
     risk=price-stop
-    if risk<=0 or risk>price*.03:return {"status":"RISK_VETO"}
-    target=price+1.6*risk if breakout else max(mid,price+1.4*risk)
-    if (target-price)/risk<1.35:return {"status":"RISK_REWARD_VETO"}
+    if risk<=0 or risk>price*.035:return {"status":"RISK_VETO"}
+    target=price+1.8*risk if breakout else max(mid,price+1.5*risk)
+    if (target-price)/risk<1.45:return {"status":"RISK_REWARD_VETO"}
     detail={"status":"TECHNICAL_CANDIDATE","strategy":kind,"signal_close":round(price,4),
       "next_bar_entry_required":True,"indicative_stop":round(stop,4),
       "indicative_target":round(target,4),"rsi14":round(cur_rsi,2),
       "bb20_lower":round(low,4),"bb20_mid":round(mid,4),"bb20_upper":round(high,4),
       "vwap":round(vwap,4),"rvol":round(rv,2),"atr14":round(a,4),
       "scalper_confirmation":"transparent candle confirmation and EMA9/EMA20 trend filter",
-      "trading_mode":"PAPER_RESEARCH_ONLY","news_verified":news_verified,"sharia_verified":sharia_verified,"ruleset_version":"balanced_v2","confidence":"rule_based_not_statistically_calibrated"}
+      "trading_mode":"PAPER_RESEARCH_ONLY","news_verified":news_verified,"sharia_verified":sharia_verified,"ruleset_version":"dual_tier_v3","confidence":"rule_based_not_statistically_calibrated"}
     # Never send an 'approved' recommendation without vetted separate evidence.
     if sharia_verified: detail["status"]="RESEARCH_CONFIRMED" if news_verified else "TECHNICALLY_CONFIRMED_NO_CATALYST"
     return detail
