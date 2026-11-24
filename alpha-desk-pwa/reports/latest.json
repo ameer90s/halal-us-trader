@@ -1,8 +1,8 @@
 {
   "mode": "github_scheduled_best_effort",
-  "last_run": "2026-11-21T19:19:43.858547+00:00",
+  "last_run": "2026-11-24T12:53:23.570144+00:00",
   "daily_review": {
-    "generated": "2026-11-21T10:08:32.034950+00:00",
+    "generated": "2026-11-24T12:53:23.570076+00:00",
     "mode": "observation_only",
     "strategies": [],
     "notes": [
@@ -34,5 +34,6 @@
   "recent_research_signals": [],
   "alerts_enabled": false,
   "notice": "Connect Alpaca and vetted Sharia universe in GitHub Actions Secrets; reports update after successful scheduled runs.",
-  "saturday_final_setup": null
+  "saturday_final_setup": null,
+  "watch_candidates": []
 }
